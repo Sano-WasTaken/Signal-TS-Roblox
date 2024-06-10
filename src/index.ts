@@ -11,6 +11,16 @@ class Signal<T extends (...args: any[]) => void> {
 		})
 	}
 
+    public Wait(): LuaTuple<Parameters<T>> {
+        const mainThread = coroutine.running()
+
+        this.Once(((...args: any[]) => {
+            coroutine.resume(mainThread, ...args)
+        }) as T)
+
+        return coroutine.yield() as LuaTuple<Parameters<T>>
+    }
+
 	public Connect(callback: T) {
 		const thread = coroutine.create(callback)
 
@@ -26,7 +36,7 @@ class Signal<T extends (...args: any[]) => void> {
 	}
 
 	public Once(callback: T) {
-		const thread = coroutine.create((...args: T[]) => {
+		const thread = coroutine.create((...args: Parameters<T>) => {
 			coroutine.close(thread)
 			callback(...args)
 		})
@@ -64,3 +74,13 @@ class Connection {
 }
 
 export = Signal
+
+const sign = new Signal<(t: string, j: number) => void>()
+
+sign.Once((t, k) => {
+    print(t, k)
+})
+
+sign.Fire("test", 54654564)
+
+const [test, test2] = sign.Wait()
