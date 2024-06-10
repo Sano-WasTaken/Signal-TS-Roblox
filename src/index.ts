@@ -7,15 +7,15 @@ class Signal<T extends (...args: any[]) => void> {
 
 	public Fire(...args: Parameters<T>) {
 		this.callbacks.forEach((thread) => {
-			coroutine.resume(thread, args)
+			coroutine.resume(thread, ...args as unknown[])
 		})
 	}
 
     public Wait(): LuaTuple<Parameters<T>> {
         const mainThread = coroutine.running()
 
-        this.Once(((...args: any[]) => {
-            coroutine.resume(mainThread, args)
+        this.Once(((...args: unknown[]) => {
+            coroutine.resume(mainThread, ...args)
         }) as T)
 
         return coroutine.yield() as LuaTuple<Parameters<T>>
@@ -36,9 +36,9 @@ class Signal<T extends (...args: any[]) => void> {
 	}
 
 	public Once(callback: T) {
-		const thread = coroutine.create((...args: Parameters<T>) => {
+		const thread = coroutine.create((...args: unknown[]) => {
 			coroutine.close(thread)
-			callback(args)
+			callback(...args)
 		})
 
 		const id = this.callbacks.push(thread)
