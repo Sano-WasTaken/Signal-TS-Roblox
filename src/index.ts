@@ -1,11 +1,11 @@
-class Signal<K extends any[], T extends (...args: K) => void> {
+class Signal<T extends (...args: any[]) => void> {
 	callbacks: thread[]
 
 	constructor() {
 		this.callbacks = []
 	}
 
-	public Fire(...args: unknown[]) {
+	public Fire(...args: Parameters<T>) {
 		this.callbacks.forEach((thread) => {
 			coroutine.resume(thread, ...args)
 		})
@@ -22,7 +22,7 @@ class Signal<K extends any[], T extends (...args: K) => void> {
 	}
 
 	public Once(callback: T) {
-		const thread = coroutine.create((...args: K) => {
+		const thread = coroutine.create((...args: T[]) => {
 			coroutine.close(thread)
 			callback(...args)
 		})
@@ -33,12 +33,12 @@ class Signal<K extends any[], T extends (...args: K) => void> {
 	}
 }
 
-class Connection<K extends any[], T extends (...args: K) => void> {
+class Connection {
 	private thread: thread
-	private signal: Signal<K, T>
+	private signal: Signal<Callback>
 	private id: number
 
-	constructor(thread: thread, signal: Signal<K, T>, id: number) {
+	constructor(thread: thread, signal: Signal<Callback>, id: number) {
 		this.thread = thread
 		this.signal = signal
 		this.id = id
