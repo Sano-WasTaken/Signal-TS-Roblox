@@ -1,13 +1,13 @@
 class Signal<T extends (...args: any[]) => void> {
-	callbacks: thread[]
+	callbacks: T[]
 
 	constructor() {
 		this.callbacks = []
 	}
 
 	public Fire(...args: Parameters<T>) {
-		this.callbacks.forEach((thread) => {
-			coroutine.resume(thread, ...args as unknown[])
+		this.callbacks.forEach((callback) => {
+			coroutine.wrap(callback)(...args)
 		})
 	}
 
@@ -22,11 +22,9 @@ class Signal<T extends (...args: any[]) => void> {
     }
 
 	public Connect(callback: T) {
-		const thread = coroutine.create(callback)
+		const id = this.callbacks.push(callback)
 
-		const id = this.callbacks.push(thread)
-
-		const connection = new Connection(thread, this, id)
+		const connection = new Connection(this, id)
 
 		return connection
 	}
@@ -36,26 +34,24 @@ class Signal<T extends (...args: any[]) => void> {
 	}
 
 	public Once(callback: T) {
-		const thread = coroutine.create((...args: unknown[]) => {
-			coroutine.close(thread)
+		const connection = this.Connect(((...args: unknown[]) => {
+			connection.Disconnect()
 			callback(...args)
-		})
+		}) as T)
 
-		const id = this.callbacks.push(thread)
-
-		return new Connection(thread, this, id)
+		return connection
 	}
 }
 
 class Connection {
-	private thread: thread
 	private signal: Signal<Callback>
 	private id: number
+	private callback: Callback
 
-	constructor(thread: thread, signal: Signal<Callback>, id: number) {
-		this.thread = thread
+	constructor(signal: Signal<Callback>, id: number) {
 		this.signal = signal
 		this.id = id
+		this.callback = signal.callbacks[id]
 	}
 
 	public Disconnect() {
@@ -65,8 +61,7 @@ class Connection {
 	}
 
 	public Reconnect() {
-		const id = this.signal.callbacks.push(this.thread)
-
+		const id = this.signal.callbacks.push(this.callback)
 		this.id = id
 
 		return this
