@@ -21,6 +21,10 @@ class Signal<T extends (...args: any[]) => void> {
 		return connection
 	}
 
+	public DisconnectAll() {
+		this.callbacks.clear()
+	}
+
 	public Once(callback: T) {
 		const thread = coroutine.create((...args: T[]) => {
 			coroutine.close(thread)
