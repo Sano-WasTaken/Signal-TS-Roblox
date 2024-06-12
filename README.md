@@ -3,6 +3,8 @@ This Signal package is a Simple Signal in TS (SSTS) made with coroutines functio
 To install SSTS (not for now)
 ```bash
 npm i @rbxts/SSTS
+or
+npm i ../rbxts-signal-ts-1.0.0.tgz
 ```
 
 Example use:
